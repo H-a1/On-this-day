@@ -1,0 +1,42 @@
+import requests
+import pymysql
+from datetime import date
+
+def send_message(api_token, channel_username, message):
+    api_url = f"https://api.telegram.org/{api_token}/sendMessage"
+    data = {
+        "chat_id": channel_username,
+        "text": message
+    }
+    response = requests.post(api_url, data=data)
+    return response.json()
+
+# Connect to the database
+connection = pymysql.connect(
+    host = 'localhost',
+    user = 'root',
+    password = '',
+    database='funfactsdb'
+)
+
+cursor = connection.cursor()
+
+
+# Fetch the fun fact for today
+cursor.execute("SELECT fact_text FROM daily_facts WHERE fact_date = %s", (date.today(),))
+fact = cursor.fetchone()
+
+if fact:
+    # Telegram settings
+    api_token = ''
+    channel_username = ''
+    
+    # Send the fun fact
+    send_message(api_token, channel_username, fact[0])
+else:
+    api_token = ''
+    channel_username = ''
+    send_message(api_token, channel_username, "No fact found for today's date!")
+
+cursor.close()
+connection.close()
